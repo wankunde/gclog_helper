@@ -72,10 +72,28 @@ function isZGCLog(lines) {
   );
 }
 
+/**
+ * Parse duration string to milliseconds
+ * @param {string} duration Duration string (e.g., "15.123ms" or "1.5s")
+ * @returns {number|null} Duration in milliseconds, or null if invalid format
+ */
+function parseDuration(duration) {
+  if (!duration) return null;
+  
+  const match = duration.match(/(\d+\.\d+)\s*(m?s)/);
+  if (!match) return null;
+
+  const [, value, unit] = match;
+  const numValue = parseFloat(value);
+  
+  return unit === 's' ? numValue * 1000 : numValue;
+}
+
 module.exports = {
   convertToKb,
   formatMemorySize,
   getRandomColor,
   isG1Log,
-  isZGCLog
+  isZGCLog,
+  parseDuration
 };
