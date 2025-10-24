@@ -28,7 +28,7 @@ class ZGCParser extends BaseParser {
       phase = phaseMatch[1];
     }
 
-    const reasonMatch = gcInfo.match(/\((.*?)\)/);
+    const reasonMatch = line.match(/Collection\s+\((.*?)\)\s+\d+(K|M|G)/);
     if (reasonMatch) {
       reason = reasonMatch[1];
     }
