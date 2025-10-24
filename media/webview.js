@@ -329,11 +329,11 @@ class GCLogViewer {
       for(let i = 0; i < data.events.length; i++){
         let event = data.events[i];
         heapData.push({
-          x: event.timestamp,
+          x: event.appTime,
           y: event.beforeSize
         });
         heapData.push({
-          x: event.timestamp,
+          x: event.appTime,
           y: event.afterSize
         });
       }
@@ -369,6 +369,7 @@ class GCLogViewer {
         },
         scales: {
           x: {
+            type: 'linear',
             display: true,
             title: {
               display: true,
