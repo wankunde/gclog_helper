@@ -365,9 +365,10 @@ class GCLogViewer {
         plugins: {
           zoom: {
             zoom: {
-              wheel: { enabled: true },
+              wwheel: { enabled: false }, // Disable mouse wheel zoom
               pinch: { enabled: true },
-              mode: 'xy'
+              mode: 'x',
+              drag: { enabled: true } // Enable drag-to-zoom
             },
             pan: { enabled: true }
           },
