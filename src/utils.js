@@ -39,43 +39,25 @@ function getRandomColor() {
 }
 
 /**
- * Check if the log lines are from G1 GC
- * @param {string[]|string} lines Array of log lines or a string to check
- * @returns {boolean} True if the lines are from G1 GC
+ * Parse duration string to milliseconds
+ * @param {string} duration Duration string (e.g., "15.123ms" or "1.5s")
+ * @returns {number|null} Duration in milliseconds, or null if invalid format
  */
-function isG1Log(lines) {
-  if (typeof lines === 'string') {
-    lines = lines.split(/\r?\n/);
-  }
-  return lines.some(line => 
-    line.toLowerCase().includes('using g1') || 
-    line.includes('G1 Young Generation') || 
-    line.includes('G1 Mixed Generation') ||
-    line.includes('GC pause (G1')
-  );
-}
+function parseDuration(duration) {
+  if (!duration) return null;
+  
+  const match = duration.match(/(\d+\.\d+)\s*(m?s)/);
+  if (!match) return null;
 
-/**
- * Check if the log lines are from ZGC
- * @param {string[]|string} lines Array of log lines or a string to check
- * @returns {boolean} True if the lines are from ZGC
- */
-function isZGCLog(lines) {
-  if (typeof lines === 'string') {
-    lines = lines.split(/\r?\n/);
-  }
-  return lines.some(line => 
-    line.toLowerCase().includes('using zgc') ||
-    line.includes('gc,init] ZGC') ||
-    line.includes('Major Collection') ||
-    line.includes('Minor Collection')
-  );
+  const [, value, unit] = match;
+  const numValue = parseFloat(value);
+  
+  return unit === 's' ? numValue * 1000 : numValue;
 }
 
 module.exports = {
   convertToKb,
   formatMemorySize,
   getRandomColor,
-  isG1Log,
-  isZGCLog
+  parseDuration
 };

@@ -237,26 +237,22 @@ function getWebviewContent(scriptUri, chartUri, zoomPluginUri, cspSource) {
     <div class="control-group">
       <input id="pathInput" type="text" placeholder="Enter path to GC log file" />
       <button id="browseBtn">Browse...</button>
-      <button id="openBtn">Add to Chart</button>
+      <button id="openBtn" style="display: none;">Add to Chart</button>
       <span id="gcType"></span>
     </div>
     <div class="control-group">
       <span id="gcType" style="padding: 6px; background: #2d2d2d; border-radius: 4px; display: none;"></span>
     </div>
     <div class="control-group">
+      <button id="detailBtn">Show GC Details</button>
+      <button id="exportBtn">Export PNG</button>
+      <button id="resetZoomBtn">Reset Zoom</button>
+    </div>
+    <div class="control-group">
       <select id="themeSelect">
         <option value="light">Light Theme</option>
         <option value="dark">Dark Theme</option>
       </select>
-      <select id="timeFormatSelect">
-        <option value="absolute">Absolute Time</option>
-        <option value="compare">Compare Mode</option>
-      </select>
-    </div>
-    <div class="control-group">
-      <button id="exportBtn">Export PNG</button>
-      <button id="resetZoomBtn">Reset Zoom</button>
-      <button id="detailBtn">Show Details</button>
     </div>
     <div id="legendContainer"></div>
     <span id="status"></span>
@@ -272,11 +268,12 @@ function getWebviewContent(scriptUri, chartUri, zoomPluginUri, cspSource) {
     <thead>
       <tr>
         <th>Time</th>
+        <th>AppTime</th>
         <th>Phase</th>
         <th>Duration (ms)</th>
         <th>Before Size (MB)</th>
         <th>After Size (MB)</th>
-        <th>Details</th>
+        <th>Reason</th>
       </tr>
     </thead>
     <tbody></tbody>

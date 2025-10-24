@@ -32,13 +32,11 @@ class GCLogViewer {
     // Restore state or initialize new state
     const state = vscode.getState() || {
       files: {},
-      timeFormat: 'absolute',
       theme: 'light'
     };
     
     this.files = new Map(Object.entries(state.files));
     this.chart = null;
-    this.timeFormat = 'absolute';
     this.init(state.theme);
   }
 
@@ -51,7 +49,6 @@ class GCLogViewer {
 
     vscode.setState({
       files,
-      timeFormat: this.timeFormat,
       theme: this.themeSelect.value
     });
   }
@@ -64,14 +61,12 @@ class GCLogViewer {
     this.errorDiv = document.getElementById('error');
     this.fileList = document.getElementById('fileList');
     this.themeSelect = document.getElementById('themeSelect');
-    this.timeFormatSelect = document.getElementById('timeFormatSelect');
     this.exportBtn = document.getElementById('exportBtn');
     this.resetZoomBtn = document.getElementById('resetZoomBtn');
     this.ctx = document.getElementById('chart').getContext('2d');
 
     // Initialize theme and time format from saved state
     this.themeSelect.value = theme || 'light';
-    this.timeFormatSelect.value = this.timeFormat;
     document.body.classList.toggle('dark-theme', this.themeSelect.value === 'dark');
     
     // Update UI from saved state
@@ -107,7 +102,11 @@ class GCLogViewer {
         // Time cell
         const timeCell = document.createElement('td');
         timeCell.textContent = event.timestamp;
-        
+
+        // AppTime cell
+        const appTimeCell = document.createElement('td');
+        appTimeCell.textContent = event.appTime;
+
         // Phase cell
         const phaseCell = document.createElement('td');
         phaseCell.textContent = event.phase;
@@ -128,9 +127,10 @@ class GCLogViewer {
         
         // Details cell
         const detailsCell = document.createElement('td');
-        detailsCell.textContent = event.details || '-';
+        detailsCell.textContent = event.reason || '-';
         
         row.appendChild(timeCell);
+        row.appendChild(appTimeCell);
         row.appendChild(phaseCell);
         row.appendChild(durationCell);
         row.appendChild(beforeSizeCell);
@@ -164,12 +164,6 @@ class GCLogViewer {
       this.saveState();
     });
 
-    this.timeFormatSelect.addEventListener('change', () => {
-      this.timeFormat = this.timeFormatSelect.value;
-      this.updateChart();
-      this.saveState();
-    });
-
     this.exportBtn.addEventListener('click', () => {
       if (this.chart) {
         const link = document.createElement('a');
@@ -198,12 +192,13 @@ class GCLogViewer {
         this.input.value = msg.path;
         this.openBtn.click();
       } else if (msg.type === 'result') {
-        console.log('Parsing result:', msg.data);
+        this.status.textContent = 'Log has been parsed';
         if (!msg.data || (!msg.data.values?.length && !msg.data.events?.length)) {
           this.errorDiv.textContent = 'No valid GC data found in the file';
           this.status.textContent = 'Error';
           return;
         }
+        
         this.addFileData(this.input.value, msg.data);
       } else if (msg.type === 'error') {
         console.error('Parse error:', msg.error);
@@ -215,10 +210,13 @@ class GCLogViewer {
 
   addFileData(path, data) {
     const color = getRandomColor();
-    this.files.set(path, { color, data, hidden: false });
+    this.files.set(path, { color, data, hidden: false, customLabel: null });
+    this.status.textContent = 'Update file list';
     this.updateFileList();
-    this.updateLegend();
+
+    this.status.textContent = 'Update chart';
     this.updateChart();
+    this.status.textContent = 'save state';
     this.saveState();
     this.status.textContent = 'Done';
   }
@@ -232,7 +230,8 @@ class GCLogViewer {
 
   updateFileList() {
     this.fileList.innerHTML = '';
-    for (const [path, { color }] of this.files) {
+    for (const [path, { color, customLabel }] of this.files) {
+      this.status.textContent = 'Prepare color picker for ' + path;
       const item = document.createElement('div');
       item.className = 'file-item';
       
@@ -244,10 +243,31 @@ class GCLogViewer {
         this.files.get(path).color = e.target.value;
         this.updateChart();
       });
-
+      
+      this.status.textContent = 'Prepare label for ' + path;
       const label = document.createElement('span');
-      label.textContent = path.split('/').pop(); // Show only filename
+      label.contentEditable = true;
+      label.textContent = customLabel || path.split('/').pop(); // Show custom label or filename
+      label.style.cursor = 'pointer';
+      label.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+      label.addEventListener('blur', (e) => {
+        const newLabel = e.target.textContent.trim();
+        if (newLabel) {
+          this.files.get(path).customLabel = newLabel;
+          this.updateChart();
+          this.saveState();
+        }
+      });
+      label.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.target.blur();
+        }
+      });
 
+      this.status.textContent = 'Prepare removeBtn for ' + path;
       const removeBtn = document.createElement('button');
       removeBtn.textContent = '×';
       removeBtn.addEventListener('click', () => this.removeFile(path));
@@ -261,7 +281,7 @@ class GCLogViewer {
 
   updateChartTheme() {
     const isDark = this.themeSelect.value === 'dark';
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    const gridColor = isDark ? 'rgba(74, 53, 53, 0.1)' : 'rgba(0, 0, 0, 0.1)';
     const textColor = isDark ? '#ffffff' : '#666666';
 
     if (this.chart) {
@@ -273,48 +293,44 @@ class GCLogViewer {
     }
   }
 
-  getNormalizedData(data) {
-    if (this.timeFormat !== 'compare') return data;
-    
-    // Find the first timestamp with data
-    const firstTimestamp = parseFloat(data.relativeLabels[0]);
-    
-    // Normalize all timestamps relative to the first one
-    return {
-      ...data,
-      relativeLabels: data.relativeLabels.map(ts => 
-        (parseFloat(ts) - firstTimestamp).toFixed(3)
-      )
-    };
-  }
-
   updateChart() {
     let datasets = [];
-    
     // Update detail table if it's visible
+    // this.status.textContent = 'Update detail table';
     const detailTable = document.getElementById('detailTable');
     if (detailTable.classList.contains('show')) {
       this.updateDetailTable();
     }
 
-    Array.from(this.files.entries()).forEach(([path, { color, data, hidden }]) => {
+    Array.from(this.files.entries()).forEach(([path, { color, data, hidden, customLabel }]) => {
       if (hidden) return;
       
-      const normalizedData = this.getNormalizedData(data);
-      const labels = data.absoluteLabels;
+      let datasetLabel = path.split('/').pop();
+      this.status.textContent = 'Add dataset from ' + path;
+      // Create heap size data points for before and after each GC event
+      const heapData = [];
+      for(let i = 0; i < data.events.length; i++){
+        let event = data.events[i];
+        heapData.push({
+          x: event.appTime,
+          y: event.beforeSize,
+          timestamp: event.timestamp
+        });
+        heapData.push({
+          x: event.appTime,
+          y: event.afterSize,
+          timestamp: event.timestamp
+        });
+      }
       
       datasets.push({
-        label: path.split('/').pop() + ' (Heap)',
-        data: data.values.map((value, index) => ({
-          x: labels[index],
-          y: value
-        })),
+        label: customLabel || path.split('/').pop(),
+        data: heapData,
         borderColor: color,
         backgroundColor: color + '20',
         fill: true,
         tension: 0.1
       });
-
     });
 
     if (this.chart) {
@@ -335,11 +351,13 @@ class GCLogViewer {
           intersect: false,
           mode: 'index'
         },
+        parsing: false,
         scales: {
           x: {
+            type: 'linear',
             display: true,
-            title: { 
-              display: true, 
+            title: {
+              display: true,
               text: 'Time',
               color: textColor
             },
@@ -348,8 +366,8 @@ class GCLogViewer {
           },
           y: {
             display: true,
-            title: { 
-              display: true, 
+            title: {
+              display: true,
               text: 'Memory Usage',
               color: textColor
             },
@@ -365,14 +383,18 @@ class GCLogViewer {
         plugins: {
           zoom: {
             zoom: {
-              wheel: { enabled: true },
+              wwheel: { enabled: false }, // Disable mouse wheel zoom
               pinch: { enabled: true },
-              mode: 'xy'
+              mode: 'x',
+              drag: { enabled: true } // Enable drag-to-zoom
             },
             pan: { enabled: true }
           },
           tooltip: {
             callbacks: {
+              title: function(context) {
+                return context[0].parsed.timestamp;
+              },
               label: function(context) {
                 return context.dataset.label + ': ' + formatMemorySize(context.parsed.y);
               }

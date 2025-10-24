@@ -2,10 +2,10 @@
 class BaseParser {
   constructor() {
     this.absoluteTsRegexes = [
-      /\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})[+-]\d{4}\]/, // ISO with timezone
-      /\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})\]/, // ISO in brackets
+      /\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})[+-]\d{4}\]:?/, // ISO with timezone and optional colon
+      /\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})\]:?/, // ISO in brackets and optional colon
       /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})/, // ISO
-      /\[timestamp: (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})\]/, // Explicit timestamp
+      /\[timestamp: (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})\]:?/, // Explicit timestamp and optional colon
       /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}):/, // ISO with colon
       /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})$/ // Pure ISO without brackets
     ];
