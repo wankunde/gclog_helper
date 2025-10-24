@@ -1,7 +1,7 @@
 // Main parser that delegates to specific GC parsers
 const ZGCParser = require('./parsers/zgc');
 const G1Parser = require('./parsers/g1');
-const { convertToKb, isG1Log, isZGCLog } = require('./utils');
+const { convertToKb } = require('./utils');
 
 /**
  * Detects the garbage collector (GC) type from the log lines.
@@ -12,12 +12,25 @@ function detectGCType(lines) {
   if (typeof lines === 'string') {
     lines = lines.split(/\r?\n/);
   }
-  if (isZGCLog(lines)) {
-    return 'ZGC';
-  }
-  if (isG1Log(lines)) {
-    return 'G1';
-  }
+
+  lines.forEach(line => {
+    if (line.toLowerCase().includes('using zgc') ||
+      line.includes('gc,init] ZGC')) {
+      return 'ZGC';
+    }
+    if (line.toLowerCase().includes('using g1') ||
+      line.includes('G1 Young Generation') ||
+      line.includes('G1 Mixed Generation') ||
+      line.includes('GC pause (G1')) {
+      return 'G1';
+    }
+
+    if (line.includes('Major Collection') ||
+      line.includes('Minor Collection')) {
+      return 'ZGC';
+    }
+  });
+
   return 'G1';
 }
 
@@ -32,7 +45,8 @@ function parse(content) {
 
   const lines = content.split(/\r?\n/);
   const gcType = detectGCType(lines);
-  
+
+  console.log('Detected GC Type:', gcType);
   let parser;
   switch (gcType) {
     case 'ZGC':
@@ -50,8 +64,8 @@ function parse(content) {
 
   // Filter out lines without events if needed
   if (result.events.length === 0) {
-    const gcLines = lines.filter(line => 
-      line.match(/\d+[KMG]/) && 
+    const gcLines = lines.filter(line =>
+      line.match(/\d+[KMG]/) &&
       (line.includes('Collection') || line.includes('GC pause'))
     );
     if (gcLines.length > 0) {

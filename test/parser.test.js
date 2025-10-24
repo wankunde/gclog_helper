@@ -3,28 +3,65 @@ const { parse, detectGCType } = require('../src/parser');
 
 describe('Main Parser', () => {
   describe('detectGCType', () => {
-    it('should detect ZGC', () => {
-      const lines = [
-        '[0.001s] Using ZGC',
-        '[0.002s][info][gc,init] Initializing ZGC'
-      ];
-      assert.strictEqual(detectGCType(lines), 'ZGC');
+    describe('ZGC Detection', () => {
+      it('should detect ZGC from initialization', () => {
+        const lines = [
+          '[0.001s][info][gc,init] ZGC initialized'
+        ];
+        assert.strictEqual(detectGCType(lines), 'ZGC');
+      });
+
+      it('should detect ZGC from usage message', () => {
+        const lines = [
+          '[0.001s] Using ZGC'
+        ];
+        assert.strictEqual(detectGCType(lines), 'ZGC');
+      });
+
+      it('should detect ZGC from collection pattern', () => {
+        const lines = [
+          '[2025-10-24T10:39:43.000+0800][info][gc] GC(0) Major Collection (System.gc()) 2048M(40%)->1024M(20%)'
+        ];
+        assert.strictEqual(detectGCType(lines), 'ZGC');
+      });
     });
 
-    it('should detect G1', () => {
-      const lines = [
-        '[0.001s] Using G1',
-        '[0.002s][info][gc] Using G1 Young Generation'
-      ];
-      assert.strictEqual(detectGCType(lines), 'G1');
+    describe('G1 Detection', () => {
+      it('should detect G1 from initialization', () => {
+        const lines = [
+          '[0.001s] Using G1'
+        ];
+        assert.strictEqual(detectGCType(lines), 'G1');
+      });
+
+      it('should detect G1 from young generation', () => {
+        const lines = [
+          '[0.002s][info][gc] Using G1 Young Generation'
+        ];
+        assert.strictEqual(detectGCType(lines), 'G1');
+      });
+
+      it('should detect G1 from mixed generation', () => {
+        const lines = [
+          '[0.002s][info][gc] GC pause (G1 Mixed Generation)'
+        ];
+        assert.strictEqual(detectGCType(lines), 'G1');
+      });
+
+      it('should detect G1 from pause pattern', () => {
+        const lines = [
+          '[2025-10-24T10:39:41.000+0800][info][gc] GC pause (G1 Young Generation) 4096M->2048M(8192M)'
+        ];
+        assert.strictEqual(detectGCType(lines), 'G1');
+      });
     });
 
-    it('should return Unknown for unrecognized GC', () => {
+    it('should throw error for unrecognized GC type', () => {
       const lines = [
         '[0.001s] Starting VM',
         '[0.002s][info] Some other log'
       ];
-      assert.strictEqual(detectGCType(lines), 'Unknown');
+      assert.throws(() => detectGCType(lines), Error);
     });
   });
 

@@ -9,6 +9,7 @@ class G1Parser extends BaseParser {
   parseGCEvent(line, timestamp) {
     let phase = '', duration = null;
     let beforeSize = null, afterSize = null;
+    let reason = '';
 
     // Determine phase based on line content
     if (line.includes('Young Generation') || line.match(/GC pause.*Young/)) {
@@ -19,11 +20,13 @@ class G1Parser extends BaseParser {
       phase = 'Full GC';
     }
 
+    console.log('Determined phase:', phase);
     // Extract duration if available
     const durationMatch = line.match(/(\d+\.\d+)\s*(m?s)/);
     if (durationMatch) {
       duration = parseDuration(durationMatch[0]);
     }
+    console.log('Extracted duration:', duration);
 
     // Extract memory changes
     const memoryMatch = line.match(/(\d+)([KMG])->(\d+)([KMG])/i);
@@ -32,27 +35,23 @@ class G1Parser extends BaseParser {
       afterSize = convertToKb(memoryMatch[3], memoryMatch[4]);
     }
 
-    if (phase) {
-      // Extract reason if available
-      const reasonMatch = line.match(/\(([^)]+)\)/);
-      if (reasonMatch) {
-        reason = reasonMatch[1].trim();
-      }
-
-      return {
-        timestamp: timestamp?.absolute || '',
-        phase,
-        reason,
-        duration,
-        beforeSize,
-        afterSize
-      };
+    console.log('Extracted memory sizes:', { beforeSize, afterSize });
+    // Extract reason if available
+    const reasonMatch = line.match(/\(([^)]+)\)/);
+    if (reasonMatch) {
+      reason = reasonMatch[1].trim();
     }
 
-    return null;
+    console.log('Extracted reason:', reason);
+    return {
+      timestamp: timestamp?.absolute || '',
+      phase,
+      reason,
+      duration,
+      beforeSize,
+      afterSize
+    };
   }
-
-
 
   parse(content) {
     const lines = content.split(/\r?\n/);
