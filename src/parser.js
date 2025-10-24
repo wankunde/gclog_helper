@@ -14,12 +14,15 @@ function detectGCType(lines) {
   }
 
   lines.forEach(line => {
-    if (line.toLowerCase().includes('using zgc') ||
-      line.includes('gc,init] ZGC')) {
+    if (line.includes('The Z Garbage Collector')) {
+      lines = lines.splice(zgcIndex, 1);  // 删除这一行
       return 'ZGC';
     }
-    if (line.toLowerCase().includes('using g1') ||
-      line.includes('G1 Young Generation') ||
+    if (line.toLowerCase().includes('using g1')) {
+      lines = lines.splice(g1Index, 1);  // 删除这一行
+      return 'G1';
+    }
+    if (line.includes('G1 Young Generation') ||
       line.includes('G1 Mixed Generation') ||
       line.includes('GC pause (G1')) {
       return 'G1';

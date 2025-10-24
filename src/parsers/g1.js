@@ -18,6 +18,8 @@ class G1Parser extends BaseParser {
       phase = 'Mixed GC';
     } else if (line.includes('Full GC')) {
       phase = 'Full GC';
+    } else {
+      return null;
     }
 
     console.log('Determined phase:', phase);
