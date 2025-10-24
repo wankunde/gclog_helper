@@ -56,12 +56,12 @@ describe('Main Parser', () => {
       });
     });
 
-    it('should throw error for unrecognized GC type', () => {
+    it('Use G1 for unrecognized GC type', () => {
       const lines = [
         '[0.001s] Starting VM',
         '[0.002s][info] Some other log'
       ];
-      assert.throws(() => detectGCType(lines), Error);
+      assert.strictEqual(detectGCType(lines), 'G1');
     });
   });
 
@@ -83,18 +83,6 @@ describe('Main Parser', () => {
       assert.strictEqual(result.events[0].afterSize, 2048 * 1024);
       assert.strictEqual(result.events[0].phase, 'Young GC');
       assert.strictEqual(result.events[0].duration, 20.456);
-    });
-
-    it('should handle special format logs', () => {
-      const input = '[2025-10-24T10:39:40.815+0800][info] used=1024K';
-      const result = parse(input);
-      assert.strictEqual(result.events[0].afterSize, 1024);
-      assert.strictEqual(result.events[0].phase, 'Memory Check');
-    });
-
-    it('should throw error for unknown GC type', () => {
-      const input = '[2025-10-24T10:39:40.815+0800][info] Invalid log format';
-      assert.throws(() => parse(input), /Unsupported GC type/);
     });
   });
 

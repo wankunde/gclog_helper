@@ -7,7 +7,12 @@ class ZGCParser extends BaseParser {
   }
 
   parseGCEvent(line, timestamp) {
-    if (!line.includes('Major Collection') && !line.includes('Minor Collection')) {
+    let gcInfo = '';
+    if (line.includes('Major Collection')) {
+      gcInfo = line.substring(line.indexOf('Major Collection') + 'Major Collection'.length);
+    } else if (line.includes('Minor Collection')) {
+      gcInfo = line.substring(line.indexOf('Minor Collection') + 'Minor Collection'.length);
+    } else {
       return null;
     }
 
@@ -23,12 +28,12 @@ class ZGCParser extends BaseParser {
       phase = phaseMatch[1];
     }
 
-    const reasonMatch = line.match(/\((.*?)\)/);
+    const reasonMatch = gcInfo.match(/\((.*?)\)/);
     if (reasonMatch) {
       reason = reasonMatch[1];
     }
 
-    const memoryMatch = line.match(/(\d+)(K|M|G)\(\d+%\)->(\d+)(K|M|G)\(\d+%\)/);
+    const memoryMatch = gcInfo.match(/(\d+)(K|M|G)\(\d+%\)->(\d+)(K|M|G)\(\d+%\)/);
     if (memoryMatch) {
       beforeVal = memoryMatch[1];
       beforeUnit = memoryMatch[2];
@@ -38,7 +43,7 @@ class ZGCParser extends BaseParser {
       return null; // Memory data is essential for ZGC events
     }
 
-    const durationMatch = line.match(/(\d+\.\d+)(m?s)/);
+    const durationMatch = gcInfo.match(/(\d+\.\d+)(m?s)/);
     if (durationMatch) {
       duration = durationMatch[1];
       timeUnit = durationMatch[2];
