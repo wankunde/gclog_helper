@@ -204,6 +204,7 @@ class GCLogViewer {
           this.status.textContent = 'Error';
           return;
         }
+        
         this.addFileData(this.input.value, msg.data);
       } else if (msg.type === 'error') {
         console.error('Parse error:', msg.error);
@@ -217,10 +218,12 @@ class GCLogViewer {
     const color = getRandomColor();
     this.files.set(path, { color, data, hidden: false });
     this.updateFileList();
-    this.updateLegend();
+    // this.updateLegend();
+        this.status.textContent = 'Done2';
     this.updateChart();
+        // this.status.textContent = 'Done3';
     this.saveState();
-    this.status.textContent = 'Done';
+    // this.status.textContent = 'Done';
   }
 
   removeFile(path) {
@@ -259,9 +262,43 @@ class GCLogViewer {
     }
   }
 
+  // updateLegend() {
+  //   const legendContainer = document.getElementById('legendContainer');
+  //   if (!legendContainer) return; // Ensure legend container exists
+
+  //   legendContainer.innerHTML = ''; // Clear existing legend items
+
+  //   Array.from(this.files.entries()).forEach(([path, { color, data, hidden }], index) => {
+  //     const legendItem = document.createElement('div');
+  //     legendItem.className = 'legend-item';
+
+  //     const checkbox = document.createElement('input');
+  //     checkbox.type = 'checkbox';
+  //     checkbox.checked = !hidden;
+  //     checkbox.id = `legend-checkbox-${index}`;
+  //     checkbox.addEventListener('change', (e) => {
+  //       this.files.get(path).hidden = !e.target.checked;
+  //       this.updateChart();
+  //     });
+
+  //     const colorBox = document.createElement('span');
+  //     colorBox.className = 'legend-color-box';
+  //     colorBox.style.backgroundColor = color;
+
+  //     const label = document.createElement('label');
+  //     label.htmlFor = `legend-checkbox-${index}`;
+  //     label.textContent = path.split('/').pop(); // Display filename
+
+  //     legendItem.appendChild(checkbox);
+  //     legendItem.appendChild(colorBox);
+  //     legendItem.appendChild(label);
+  //     legendContainer.appendChild(legendItem);
+  //   });
+  // }
+
   updateChartTheme() {
     const isDark = this.themeSelect.value === 'dark';
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    const gridColor = isDark ? 'rgba(74, 53, 53, 0.1)' : 'rgba(0, 0, 0, 0.1)';
     const textColor = isDark ? '#ffffff' : '#666666';
 
     if (this.chart) {
@@ -290,7 +327,7 @@ class GCLogViewer {
 
   updateChart() {
     let datasets = [];
-    
+    this.status.textContent = 'Done2-1';
     // Update detail table if it's visible
     const detailTable = document.getElementById('detailTable');
     if (detailTable.classList.contains('show')) {
@@ -298,23 +335,35 @@ class GCLogViewer {
     }
 
     Array.from(this.files.entries()).forEach(([path, { color, data, hidden }]) => {
+      this.status.textContent = 'Done2-2-1';
       if (hidden) return;
       
-      const normalizedData = this.getNormalizedData(data);
+      this.status.textContent = 'Done2-2-2';
+      const normalizedData = []
+      for(let i = 0;i < data.events.length;i++){
+        let event = data.events[i];
+        normalizedData.push({timestamp: event.timestamp, size: event.beforeSize});
+        normalizedData.push({timestamp: event.timestamp, size: event.afterSize});
+      }
+
+      this.getNormalizedData(data);
+
+      console.log('Done2-2-2');
+      this.status.textContent = 'debug data = ' + JSON.stringify(data) + ', normalizedData = ' + JSON.stringify(normalizedData);
       const labels = data.absoluteLabels;
       
+      console.log('Done2-2-4: data =', data); // Use console.log for detailed object info
       datasets.push({
         label: path.split('/').pop() + ' (Heap)',
-        data: data.values.map((value, index) => ({
-          x: labels[index],
-          y: value
+        data: normalizedData.map((ts, index) => ({
+          x: ts.timestamp,
+          y: ts.size
         })),
         borderColor: color,
         backgroundColor: color + '20',
         fill: true,
         tension: 0.1
       });
-
     });
 
     if (this.chart) {
@@ -325,6 +374,7 @@ class GCLogViewer {
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
     const textColor = isDark ? '#ffffff' : '#666666';
 
+    this.status.textContent = 'debug datasets = ' + JSON.stringify(datasets);
     this.chart = new Chart(this.ctx, {
       type: 'line',
       data: { datasets },

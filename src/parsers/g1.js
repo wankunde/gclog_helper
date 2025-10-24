@@ -6,7 +6,7 @@ class G1Parser extends BaseParser {
     super();
   }
 
-  parseGCEvent(line, timestamp) {
+  parseGCEvent(line, timestamp, startTime) {
     let phase = '', duration = null;
     let beforeSize = null, afterSize = null;
     let reason = '';
@@ -49,6 +49,7 @@ class G1Parser extends BaseParser {
     console.log('Extracted reason:', reason);
     return {
       timestamp: timestamp?.absolute || '',
+      appTime: new Date(timestamp.absolute) - startTime,
       phase,
       reason,
       duration,
@@ -67,12 +68,11 @@ class G1Parser extends BaseParser {
 
       const timestamp = this.parseTimestamp(line);
       if (!timestamp) continue;
-
       if (timestamp.absolute && !startTime) {
         startTime = new Date(timestamp.absolute);
       }
 
-      const event = this.parseGCEvent(line, timestamp);
+      const event = this.parseGCEvent(line, timestamp, startTime);
       if (event) {
         events.push(event);
       }

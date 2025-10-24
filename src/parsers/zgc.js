@@ -6,7 +6,7 @@ class ZGCParser extends BaseParser {
     super();
   }
 
-  parseGCEvent(line, timestamp) {
+  parseGCEvent(line, timestamp, startTime) {
     let gcInfo = '';
     if (line.includes('Major Collection')) {
       gcInfo = line.substring(line.indexOf('Major Collection') + 'Major Collection'.length);
@@ -51,6 +51,7 @@ class ZGCParser extends BaseParser {
 
     return {
       timestamp: timestamp?.absolute || '',
+      appTime: new Date(timestamp.absolute) - startTime,
       phase: phase ? `${phase} Collection` : '',
       reason: reason || '',
       beforeSize: beforeVal ? convertToKb(beforeVal, beforeUnit) : null,
@@ -69,12 +70,12 @@ class ZGCParser extends BaseParser {
 
       const timestamp = this.parseTimestamp(line);
       if (!timestamp) continue;
-
-      const event = this.parseGCEvent(line, timestamp);
-      if (event) {
-        if (timestamp.absolute && !startTime) {
+      if (timestamp.absolute && !startTime) {
           startTime = new Date(timestamp.absolute);
-        }
+      }
+
+      const event = this.parseGCEvent(line, timestamp, startTime);
+      if (event) {
         events.push(event);
       }
     }
