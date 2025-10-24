@@ -330,11 +330,13 @@ class GCLogViewer {
         let event = data.events[i];
         heapData.push({
           x: event.appTime,
-          y: event.beforeSize
+          y: event.beforeSize,
+          timestamp: event.timestamp
         });
         heapData.push({
           x: event.appTime,
-          y: event.afterSize
+          y: event.afterSize,
+          timestamp: event.timestamp
         });
       }
       
@@ -367,6 +369,7 @@ class GCLogViewer {
           intersect: false,
           mode: 'index'
         },
+        parsing: false,
         scales: {
           x: {
             type: 'linear',
@@ -408,10 +411,7 @@ class GCLogViewer {
           tooltip: {
             callbacks: {
               title: function(context) {
-                return context[0].parsed.x;
-                // const timestamp = context[0].parsed.x;
-                // const date = new Date(timestamp);
-                // return date.toLocaleString() + ' (' + timestamp + ')';
+                return context[0].parsed.timestamp;
               },
               label: function(context) {
                 return context.dataset.label + ': ' + formatMemorySize(context.parsed.y);
