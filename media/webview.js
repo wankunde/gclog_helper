@@ -203,7 +203,7 @@ class GCLogViewer {
         this.input.value = msg.path;
         this.openBtn.click();
       } else if (msg.type === 'result') {
-        console.log('Parsing result:', msg.data);
+        this.status.textContent = 'Log has been parsed';
         if (!msg.data || (!msg.data.values?.length && !msg.data.events?.length)) {
           this.errorDiv.textContent = 'No valid GC data found in the file';
           this.status.textContent = 'Error';
@@ -221,12 +221,15 @@ class GCLogViewer {
 
   addFileData(path, data) {
     const color = getRandomColor();
-    this.files.set(path, { color, data, hidden: false });
+    this.files.set(path, { color, data, hidden: false, customLabel: null });
+    this.status.textContent = 'Update file list';
     this.updateFileList();
-    // this.updateLegend();
-        
+
+    this.status.textContent = 'Update chart';
     this.updateChart();
+    this.status.textContent = 'save state';
     this.saveState();
+    this.status.textContent = 'Done';
   }
 
   removeFile(path) {
@@ -238,7 +241,8 @@ class GCLogViewer {
 
   updateFileList() {
     this.fileList.innerHTML = '';
-    for (const [path, { color }] of this.files) {
+    for (const [path, { color, customLabel }] of this.files) {
+      this.status.textContent = 'Prepare color picker for ' + path;
       const item = document.createElement('div');
       item.className = 'file-item';
       
@@ -250,10 +254,31 @@ class GCLogViewer {
         this.files.get(path).color = e.target.value;
         this.updateChart();
       });
-
+      
+      this.status.textContent = 'Prepare label for ' + path;
       const label = document.createElement('span');
-      label.textContent = path.split('/').pop(); // Show only filename
+      label.contentEditable = true;
+      label.textContent = customLabel || path.split('/').pop(); // Show custom label or filename
+      label.style.cursor = 'pointer';
+      label.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+      label.addEventListener('blur', (e) => {
+        const newLabel = e.target.textContent.trim();
+        if (newLabel) {
+          this.files.get(path).customLabel = newLabel;
+          this.updateChart();
+          this.saveState();
+        }
+      });
+      label.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.target.blur();
+        }
+      });
 
+      this.status.textContent = 'Prepare removeBtn for ' + path;
       const removeBtn = document.createElement('button');
       removeBtn.textContent = '×';
       removeBtn.addEventListener('click', () => this.removeFile(path));
@@ -264,40 +289,6 @@ class GCLogViewer {
       this.fileList.appendChild(item);
     }
   }
-
-  // updateLegend() {
-  //   const legendContainer = document.getElementById('legendContainer');
-  //   if (!legendContainer) return; // Ensure legend container exists
-
-  //   legendContainer.innerHTML = ''; // Clear existing legend items
-
-  //   Array.from(this.files.entries()).forEach(([path, { color, data, hidden }], index) => {
-  //     const legendItem = document.createElement('div');
-  //     legendItem.className = 'legend-item';
-
-  //     const checkbox = document.createElement('input');
-  //     checkbox.type = 'checkbox';
-  //     checkbox.checked = !hidden;
-  //     checkbox.id = `legend-checkbox-${index}`;
-  //     checkbox.addEventListener('change', (e) => {
-  //       this.files.get(path).hidden = !e.target.checked;
-  //       this.updateChart();
-  //     });
-
-  //     const colorBox = document.createElement('span');
-  //     colorBox.className = 'legend-color-box';
-  //     colorBox.style.backgroundColor = color;
-
-  //     const label = document.createElement('label');
-  //     label.htmlFor = `legend-checkbox-${index}`;
-  //     label.textContent = path.split('/').pop(); // Display filename
-
-  //     legendItem.appendChild(checkbox);
-  //     legendItem.appendChild(colorBox);
-  //     legendItem.appendChild(label);
-  //     legendContainer.appendChild(legendItem);
-  //   });
-  // }
 
   updateChartTheme() {
     const isDark = this.themeSelect.value === 'dark';
@@ -316,14 +307,17 @@ class GCLogViewer {
   updateChart() {
     let datasets = [];
     // Update detail table if it's visible
+    this.status.textContent = 'Update detail table';
     const detailTable = document.getElementById('detailTable');
     if (detailTable.classList.contains('show')) {
       this.updateDetailTable();
     }
 
-    Array.from(this.files.entries()).forEach(([path, { color, data, hidden }]) => {
+    Array.from(this.files.entries()).forEach(([path, { color, data, hidden, customLabel }]) => {
       if (hidden) return;
       
+      let datasetLabel = path.split('/').pop();
+      this.status.textContent = 'Add dataset from ' + path;
       // Create heap size data points for before and after each GC event
       const heapData = [];
       for(let i = 0; i < data.events.length; i++){
@@ -340,9 +334,8 @@ class GCLogViewer {
         });
       }
       
-      this.status.textContent = 'heapData:' + JSON.stringify(heapData);
       datasets.push({
-        label: path.split('/').pop(),
+        label: customLabel || path.split('/').pop(),
         data: heapData,
         borderColor: color,
         backgroundColor: color + '20',
