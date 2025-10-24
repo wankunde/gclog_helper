@@ -256,7 +256,7 @@ function getWebviewContent(scriptUri, chartUri, zoomPluginUri, cspSource) {
     <div class="control-group">
       <button id="exportBtn">Export PNG</button>
       <button id="resetZoomBtn">Reset Zoom</button>
-      <button id="detailBtn">Show Details</button>
+      <button id="detailBtn">Show GC Details</button>
     </div>
     <div id="legendContainer"></div>
     <span id="status"></span>
@@ -272,11 +272,12 @@ function getWebviewContent(scriptUri, chartUri, zoomPluginUri, cspSource) {
     <thead>
       <tr>
         <th>Time</th>
+        <th>AppTime</th>
         <th>Phase</th>
         <th>Duration (ms)</th>
         <th>Before Size (MB)</th>
         <th>After Size (MB)</th>
-        <th>Details</th>
+        <th>Reason</th>
       </tr>
     </thead>
     <tbody></tbody>

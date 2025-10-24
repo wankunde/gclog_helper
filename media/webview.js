@@ -107,7 +107,11 @@ class GCLogViewer {
         // Time cell
         const timeCell = document.createElement('td');
         timeCell.textContent = event.timestamp;
-        
+
+        // AppTime cell
+        const appTimeCell = document.createElement('td');
+        appTimeCell.textContent = event.appTime;
+
         // Phase cell
         const phaseCell = document.createElement('td');
         phaseCell.textContent = event.phase;
@@ -128,9 +132,10 @@ class GCLogViewer {
         
         // Details cell
         const detailsCell = document.createElement('td');
-        detailsCell.textContent = event.details || '-';
+        detailsCell.textContent = event.reason || '-';
         
         row.appendChild(timeCell);
+        row.appendChild(appTimeCell);
         row.appendChild(phaseCell);
         row.appendChild(durationCell);
         row.appendChild(beforeSizeCell);
@@ -219,11 +224,9 @@ class GCLogViewer {
     this.files.set(path, { color, data, hidden: false });
     this.updateFileList();
     // this.updateLegend();
-        this.status.textContent = 'Done2';
+        
     this.updateChart();
-        // this.status.textContent = 'Done3';
     this.saveState();
-    // this.status.textContent = 'Done';
   }
 
   removeFile(path) {
@@ -310,24 +313,8 @@ class GCLogViewer {
     }
   }
 
-  getNormalizedData(data) {
-    if (this.timeFormat !== 'compare') return data;
-    
-    // Find the first timestamp with data
-    const firstTimestamp = parseFloat(data.relativeLabels[0]);
-    
-    // Normalize all timestamps relative to the first one
-    return {
-      ...data,
-      relativeLabels: data.relativeLabels.map(ts => 
-        (parseFloat(ts) - firstTimestamp).toFixed(3)
-      )
-    };
-  }
-
   updateChart() {
     let datasets = [];
-    this.status.textContent = 'Done2-1';
     // Update detail table if it's visible
     const detailTable = document.getElementById('detailTable');
     if (detailTable.classList.contains('show')) {
@@ -335,30 +322,26 @@ class GCLogViewer {
     }
 
     Array.from(this.files.entries()).forEach(([path, { color, data, hidden }]) => {
-      this.status.textContent = 'Done2-2-1';
       if (hidden) return;
       
-      this.status.textContent = 'Done2-2-2';
-      const normalizedData = []
-      for(let i = 0;i < data.events.length;i++){
+      // Create heap size data points for before and after each GC event
+      const heapData = [];
+      for(let i = 0; i < data.events.length; i++){
         let event = data.events[i];
-        normalizedData.push({timestamp: event.timestamp, size: event.beforeSize});
-        normalizedData.push({timestamp: event.timestamp, size: event.afterSize});
+        heapData.push({
+          x: event.timestamp,
+          y: event.beforeSize
+        });
+        heapData.push({
+          x: event.timestamp,
+          y: event.afterSize
+        });
       }
-
-      this.getNormalizedData(data);
-
-      console.log('Done2-2-2');
-      this.status.textContent = 'debug data = ' + JSON.stringify(data) + ', normalizedData = ' + JSON.stringify(normalizedData);
-      const labels = data.absoluteLabels;
       
-      console.log('Done2-2-4: data =', data); // Use console.log for detailed object info
+      this.status.textContent = 'heapData:' + JSON.stringify(heapData);
       datasets.push({
-        label: path.split('/').pop() + ' (Heap)',
-        data: normalizedData.map((ts, index) => ({
-          x: ts.timestamp,
-          y: ts.size
-        })),
+        label: path.split('/').pop(),
+        data: heapData,
         borderColor: color,
         backgroundColor: color + '20',
         fill: true,
@@ -374,7 +357,6 @@ class GCLogViewer {
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
     const textColor = isDark ? '#ffffff' : '#666666';
 
-    this.status.textContent = 'debug datasets = ' + JSON.stringify(datasets);
     this.chart = new Chart(this.ctx, {
       type: 'line',
       data: { datasets },
@@ -388,8 +370,8 @@ class GCLogViewer {
         scales: {
           x: {
             display: true,
-            title: { 
-              display: true, 
+            title: {
+              display: true,
               text: 'Time',
               color: textColor
             },
@@ -398,8 +380,8 @@ class GCLogViewer {
           },
           y: {
             display: true,
-            title: { 
-              display: true, 
+            title: {
+              display: true,
               text: 'Memory Usage',
               color: textColor
             },
@@ -424,6 +406,12 @@ class GCLogViewer {
           },
           tooltip: {
             callbacks: {
+              title: function(context) {
+                return context[0].parsed.x;
+                // const timestamp = context[0].parsed.x;
+                // const date = new Date(timestamp);
+                // return date.toLocaleString() + ' (' + timestamp + ')';
+              },
               label: function(context) {
                 return context.dataset.label + ': ' + formatMemorySize(context.parsed.y);
               }
