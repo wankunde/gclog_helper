@@ -35,6 +35,8 @@ class G1Parser extends BaseParser {
     if (memoryMatch) {
       beforeSize = convertToKb(memoryMatch[1], memoryMatch[2]);
       afterSize = convertToKb(memoryMatch[3], memoryMatch[4]);
+    } else {
+      return null; // Memory data is essential for G1 events
     }
 
     console.log('Extracted memory sizes:', { beforeSize, afterSize });

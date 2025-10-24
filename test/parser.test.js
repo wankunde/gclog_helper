@@ -6,14 +6,14 @@ describe('Main Parser', () => {
     describe('ZGC Detection', () => {
       it('should detect ZGC from initialization', () => {
         const lines = [
-          '[0.001s][info][gc,init] ZGC initialized'
+          '[2025-10-24T10:39:40.817+0800][info   ][gc,init ] Initializing The Z Garbage Collector'
         ];
         assert.strictEqual(detectGCType(lines), 'ZGC');
       });
 
       it('should detect ZGC from usage message', () => {
         const lines = [
-          '[0.001s] Using ZGC'
+          '[0.001s] Using The Z Garbage Collector'
         ];
         assert.strictEqual(detectGCType(lines), 'ZGC');
       });

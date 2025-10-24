@@ -7,18 +7,49 @@ class ZGCParser extends BaseParser {
   }
 
   parseGCEvent(line, timestamp) {
-    // Match GC event line with or without duration
-    const eventMatch = line.match(/GC\((\d+)\)\s+(Major|Minor)\s+Collection\s+\((.*?)\)\s+(\d+)(K|M|G)(?:\(\d+%\))?->(\d+)(K|M|G)(?:\(\d+%\))?(?:\s+(\d+\.\d+)(m?s))?/);
-    if (!eventMatch) return null;
+    if (!line.includes('Major Collection') && !line.includes('Minor Collection')) {
+      return null;
+    }
 
-    const [, gc_id, phase, reason, beforeVal, beforeUnit, afterVal, afterUnit, duration, timeUnit] = eventMatch;
-    
+    let gc_id = '', phase = '', reason = '', beforeVal = '', beforeUnit = '', afterVal = '', afterUnit = '', duration = '', timeUnit = '';
+
+    const idMatch = line.match(/GC\((\d+)\)/);
+    if (idMatch) {
+      gc_id = idMatch[1];
+    }
+
+    const phaseMatch = line.match(/(Major|Minor)\s+Collection/);
+    if (phaseMatch) {
+      phase = phaseMatch[1];
+    }
+
+    const reasonMatch = line.match(/\((.*?)\)/);
+    if (reasonMatch) {
+      reason = reasonMatch[1];
+    }
+
+    const memoryMatch = line.match(/(\d+)(K|M|G)\(\d+%\)->(\d+)(K|M|G)\(\d+%\)/);
+    if (memoryMatch) {
+      beforeVal = memoryMatch[1];
+      beforeUnit = memoryMatch[2];
+      afterVal = memoryMatch[3];
+      afterUnit = memoryMatch[4];
+    } else {
+      return null; // Memory data is essential for ZGC events
+    }
+
+    const durationMatch = line.match(/(\d+\.\d+)(m?s)/);
+    if (durationMatch) {
+      duration = durationMatch[1];
+      timeUnit = durationMatch[2];
+    }
+
     return {
       timestamp: timestamp?.absolute || '',
-      phase: `${phase} Collection`,
-      reason,
-      beforeSize: convertToKb(beforeVal, beforeUnit),
-      afterSize: convertToKb(afterVal, afterUnit),
+      phase: phase ? `${phase} Collection` : '',
+      reason: reason || '',
+      beforeSize: beforeVal ? convertToKb(beforeVal, beforeUnit) : null,
+      afterSize: afterVal ? convertToKb(afterVal, afterUnit) : null,
       duration: duration ? parseDuration(`${duration}${timeUnit}`) : null
     };
   }
