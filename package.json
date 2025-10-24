@@ -1,0 +1,32 @@
+{
+  "name": "gclog_helper",
+  "displayName": "gclog_helper",
+  "description": "Analyze JVM GC logs and visualize memory usage trends.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:gclog_helper.open"
+  ],
+  "main": "extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gclog_helper.open",
+        "title": "Open GC Log Helper"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "node ./node_modules/vscode/bin/install",
+    "test": "mocha test/**/*.test.js"
+  },
+  "devDependencies": {
+    "vscode": "^1.1.37",
+    "mocha": "^10.2.0"
+  }
+}
