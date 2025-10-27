@@ -1,10 +1,15 @@
 {
-  "name": "gclog_helper",
-  "displayName": "gclog_helper",
-  "description": "Analyze JVM GC logs and visualize memory usage trends.",
-  "version": "0.0.1",
+  "name": "gclog-helper",
+  "displayName": "GC Log Helper",
+  "description": "Parse Java GC logs and visualize JVM memory usage trends.",
+  "version": "0.1.0",
+  "publisher": "wankunde",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wankunde/gclog_helper.git"
+  },
   "engines": {
-    "vscode": "^1.60.0"
+    "vscode": "^1.84.0"
   },
   "categories": [
     "Other"
@@ -22,11 +27,16 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "node ./node_modules/vscode/bin/install",
-    "test": "mocha test/**/*.test.js"
+    "vscode:prepublish": "echo 'No compile needed for JS'",
+    "compile": "echo 'No compile needed for JS'",
+    "package": "vsce package",
+    "lint": "echo 'No linter configured'",
+    "test:watch": "npm run compile && npm test",
+    "test:ci": "npm run compile && npm test"
   },
   "devDependencies": {
-    "vscode": "^1.1.37",
-    "mocha": "^10.2.0"
+    "@types/node": "^20.19.23",
+    "@types/vscode": "^1.84.0",
+    "@vscode/vsce": "^2.15.0"
   }
 }
