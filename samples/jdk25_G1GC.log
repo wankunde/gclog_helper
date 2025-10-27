@@ -1,0 +1,44 @@
+/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/java -Xmx1024m -Xlog:gc --enable-preview -javaagent:/Applications/IntelliJ IDEA.app/Contents/lib/idea_rt.jar=52221 -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -classpath /Users/wankun/ws/bili/tmp/calc/target/classes:/Users/wankun/.m2/repository/org/openjdk/jol/jol-core/0.17/jol-core-0.17.jar com.wankun.test.TestA
+[0.024s][info][gc] Using G1
+[1.468s][info][gc] GC(0) Pause Young (Normal) (G1 Evacuation Pause) 82M->68M(258M) 42.282ms
+[4.202s][info][gc] GC(1) Pause Young (Concurrent Start) (G1 Humongous Allocation) 172M->173M(258M) 67.702ms
+[4.202s][info][gc] GC(2) Concurrent Mark Cycle
+[4.251s][info][gc] GC(2) Pause Remark 210M->160M(267M) 0.680ms
+[4.281s][info][gc] GC(2) Pause Cleanup 161M->161M(267M) 0.019ms
+[4.281s][info][gc] GC(2) Concurrent Mark Cycle 79.421ms
+[5.301s][info][gc] GC(3) Pause Young (Prepare Mixed) (G1 Evacuation Pause) 185M->186M(267M) 21.100ms
+[6.389s][info][gc] GC(4) Pause Young (Mixed) (G1 Evacuation Pause) 264M->266M(320M) 30.874ms
+[7.104s][info][gc] GC(5) Pause Young (Concurrent Start) (G1 Evacuation Pause) 283M->284M(320M) 18.176ms
+[7.104s][info][gc] GC(6) Concurrent Mark Cycle
+[7.226s][info][gc] GC(6) Pause Remark 287M->227M(375M) 0.634ms
+[7.267s][info][gc] GC(6) Pause Cleanup 228M->228M(375M) 0.019ms
+[7.268s][info][gc] GC(6) Concurrent Mark Cycle 164.086ms
+[7.755s][info][gc] GC(7) Pause Young (Prepare Mixed) (G1 Evacuation Pause) 239M->241M(375M) 21.881ms
+[9.592s][info][gc] GC(8) Pause Young (Mixed) (G1 Evacuation Pause) 362M->362M(455M) 62.093ms
+[10.823s][info][gc] GC(9) Pause Young (Concurrent Start) (G1 Evacuation Pause) 390M->392M(455M) 28.551ms
+[10.823s][info][gc] GC(10) Concurrent Mark Cycle
+[10.987s][info][gc] GC(10) Pause Remark 396M->343M(567M) 0.689ms
+[11.050s][info][gc] GC(10) Pause Cleanup 345M->345M(567M) 0.029ms
+[11.051s][info][gc] GC(10) Concurrent Mark Cycle 228.189ms
+[11.835s][info][gc] GC(11) Pause Young (Prepare Mixed) (G1 Evacuation Pause) 362M->364M(567M) 35.108ms
+[14.650s][info][gc] GC(12) Pause Young (Mixed) (G1 Evacuation Pause) 546M->545M(686M) 49.114ms
+[16.537s][info][gc] GC(13) Pause Young (Concurrent Start) (G1 Evacuation Pause) 588M->590M(686M) 40.902ms
+[16.537s][info][gc] GC(14) Concurrent Mark Cycle
+[16.817s][info][gc] GC(14) Pause Remark 597M->517M(850M) 0.746ms
+[16.925s][info][gc] GC(14) Pause Cleanup 519M->519M(850M) 0.036ms
+[16.926s][info][gc] GC(14) Concurrent Mark Cycle 389.116ms
+[18.030s][info][gc] GC(15) Pause Young (Prepare Mixed) (G1 Evacuation Pause) 545M->546M(850M) 27.438ms
+[21.104s][info][gc] GC(16) Pause Young (Mixed) (G1 Humongous Allocation) 614M->613M(850M) 51.117ms
+[24.584s][info][gc] GC(17) Pause Young (Concurrent Start) (G1 Evacuation Pause) 866M->868M(956M) 82.760ms
+[24.584s][info][gc] GC(18) Concurrent Mark Cycle
+[25.016s][info][gc] GC(18) Pause Remark 878M->759M(1024M) 1.241ms
+[25.157s][info][gc] GC(18) Pause Cleanup 763M->763M(1024M) 0.038ms
+[25.158s][info][gc] GC(18) Concurrent Mark Cycle 573.266ms
+[26.341s][info][gc] GC(19) Pause Young (Prepare Mixed) (G1 Evacuation Pause) 789M->790M(1024M) 52.023ms
+[29.823s][info][gc] GC(20) Pause Young (Mixed) (G1 Evacuation Pause) 862M->861M(1024M) 52.971ms
+[32.126s][info][gc] GC(21) Pause Young (Concurrent Start) (G1 Evacuation Pause) 911M->913M(1024M) 52.260ms
+[32.126s][info][gc] GC(22) Concurrent Mark Cycle
+[32.279s][info][gc] GC(23) Pause Young (Normal) (G1 Humongous Allocation) 916M->918M(1024M) 9.796ms
+[32.985s][info][gc] GC(24) Pause Full (G1 Compaction Pause) 918M->895M(1024M) 706.027ms
+[33.448s][info][gc] GC(25) Pause Full (G1 Compaction Pause) 895M->894M(1024M) 463.097ms
+[33.448s][info][gc] GC(22) Concurrent Mark Cycle 1322.553ms
