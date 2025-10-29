@@ -1,32 +1,5 @@
 const vscode = acquireVsCodeApi();
 
-const { formatMemorySize, getRandomColor } = (function() {
-  function convertToKb(value, unit) {
-    switch(unit.toUpperCase()) {
-      case 'K': return parseInt(value);
-      case 'M': return parseInt(value) * 1024;
-      case 'G': return parseInt(value) * 1024 * 1024;
-      default: return parseInt(value);
-    }
-  }
-
-  function formatMemorySize(value) {
-    if (value >= 1024 * 1024) return (value / (1024 * 1024)).toFixed(2) + ' GB';
-    if (value >= 1024) return (value / 1024).toFixed(2) + ' MB';
-    return value + ' KB';
-  }
-
-  function getRandomColor() {
-    const colors = [
-      '#4dc9f6', '#f67019', '#f53794', '#537bc4',
-      '#acc236', '#166a8f', '#00a950', '#58595b'
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
-  }
-
-  return { formatMemorySize, getRandomColor };
-})();
-
 class GCLogViewer {
   constructor() {
     // Restore state or initialize new state
@@ -209,7 +182,8 @@ class GCLogViewer {
   }
 
   addFileData(path, data) {
-    const color = getRandomColor();
+    const fileIndex = this.files.size;  // Current number of files as index
+    const color = getColor(fileIndex);   // Use index to get sequential color
     this.files.set(path, { color, data, hidden: false, customLabel: null });
     this.status.textContent = 'Update file list';
     this.updateFileList();

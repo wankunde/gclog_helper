@@ -2,7 +2,7 @@
   "name": "gclog-helper",
   "displayName": "GC Log Helper",
   "description": "Parse Java GC logs and visualize JVM memory usage trends.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "wankunde",
   "repository": {
     "type": "git",

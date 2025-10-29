@@ -27,18 +27,6 @@ function formatMemorySize(value) {
 }
 
 /**
- * Generate a random color from the predefined color palette
- * @returns {string} A hex color code
- */
-function getRandomColor() {
-  const colors = [
-    '#4dc9f6', '#f67019', '#f53794', '#537bc4',
-    '#acc236', '#166a8f', '#00a950', '#58595b'
-  ];
-  return colors[Math.floor(Math.random() * colors.length)];
-}
-
-/**
  * Parse duration string to milliseconds
  * @param {string} duration Duration string (e.g., "15.123ms" or "1.5s")
  * @returns {number|null} Duration in milliseconds, or null if invalid format
@@ -58,6 +46,5 @@ function parseDuration(duration) {
 module.exports = {
   convertToKb,
   formatMemorySize,
-  getRandomColor,
   parseDuration
 };

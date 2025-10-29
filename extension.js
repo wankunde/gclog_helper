@@ -37,8 +37,9 @@ function activate(context) {
     const scriptUri = currentPanel.webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media', 'webview.js')));
     const chartUri = currentPanel.webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media', 'chart.min.js')));
     const zoomPluginUri = currentPanel.webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media', 'chartjs-plugin-zoom.min.js')));
+    const utilsUri = currentPanel.webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media', 'utils.js')));
 
-    currentPanel.webview.html = getWebviewContent(scriptUri, chartUri, zoomPluginUri, currentPanel.webview.cspSource);
+    currentPanel.webview.html = getWebviewContent(scriptUri, chartUri, zoomPluginUri, utilsUri, currentPanel.webview.cspSource);
 
     currentPanel.webview.onDidReceiveMessage(async (message) => {
       if (message.command === 'browse') {
@@ -78,7 +79,7 @@ exports.activate = activate;
 function deactivate() {}
 exports.deactivate = deactivate;
 
-function getWebviewContent(scriptUri, chartUri, zoomPluginUri, cspSource) {
+function getWebviewContent(scriptUri, chartUri, zoomPluginUri, utilsUri, cspSource) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -281,6 +282,7 @@ function getWebviewContent(scriptUri, chartUri, zoomPluginUri, cspSource) {
 
   <script src="${chartUri}"></script>
   <script src="${zoomPluginUri}"></script>
+  <script src="${utilsUri}"></script>
   <script src="${scriptUri}"></script>
 </body>
 </html>`;
