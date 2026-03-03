@@ -87,6 +87,56 @@ describe('Main Parser', () => {
     });
   });
 
+  describe('extractMetadata (via parse)', () => {
+    it('should extract G1 GC name and max heap from JDK 25 gc,init format', () => {
+      const input = `[2025-10-27T20:17:52.106+0800][0.008s][info][gc     ] Using G1
+[2025-10-27T20:17:52.107+0800][0.009s][info][gc,init] Heap Max Capacity: 1G
+[2025-10-27T20:17:53.508+0800][1.410s][info][gc] GC(0) Pause Young (Normal) (G1 Evacuation Pause) 256M->128M(1024M) 10.000ms`;
+      const result = parse(input);
+      assert.strictEqual(result.gcName, 'G1 GC');
+      assert.strictEqual(result.maxHeapSize, '1G');
+    });
+
+    it('should extract ZGC name and max heap from JDK 25 gc,init format', () => {
+      const input = `[0.001s] Using The Z Garbage Collector
+[0.002s][info][gc,init] Max Capacity: 16384M
+[2025-10-24T10:40:27.096+0800][info][gc] GC(0) Major Collection (Warmup) 4096M(40%)->2048M(20%) 15.123ms`;
+      const result = parse(input);
+      assert.strictEqual(result.gcName, 'ZGC');
+      assert.strictEqual(result.maxHeapSize, '16384M');
+    });
+
+    it('should extract G1 GC name and max heap from JDK 8 CommandLine flags', () => {
+      const input = `CommandLine flags: -XX:InitialHeapSize=268435456 -XX:MaxHeapSize=1073741824 -XX:+PrintGC -XX:+UseG1GC
+0.833: [GC pause (G1 Evacuation Pause) (young) 30773K->19437K(256M), 0.0425205 secs]`;
+      const result = parse(input);
+      assert.strictEqual(result.gcName, 'G1 GC');
+      assert.strictEqual(result.maxHeapSize, '1G');
+    });
+
+    it('should extract Parallel GC name and max heap from JDK 8 CommandLine flags', () => {
+      const input = `CommandLine flags: -XX:InitialHeapSize=268435456 -XX:MaxHeapSize=1073741824 -XX:+PrintGC -XX:+UseParallelGC
+2.290: [GC (Allocation Failure)  65536K->34914K(251392K), 0.0559985 secs]`;
+      const result = parse(input);
+      assert.strictEqual(result.gcName, 'Parallel GC');
+      assert.strictEqual(result.maxHeapSize, '1G');
+    });
+
+    it('should extract max heap from command line -Xmx', () => {
+      const input = `/path/to/java -Xmx1024m -Xlog:gc com.example.Main
+[0.024s][info][gc] Using G1
+[1.468s][info][gc] GC(0) Pause Young (Normal) (G1 Evacuation Pause) 82M->68M(258M) 42.282ms`;
+      const result = parse(input);
+      assert.strictEqual(result.maxHeapSize, '1024M');
+    });
+
+    it('should return null maxHeapSize when no metadata is present', () => {
+      const input = `[2025-10-24T10:39:41.000+0800][info][gc] GC pause (G1 Young Generation) (System.gc()) 4096M->2048M(8192M) 20.456ms`;
+      const result = parse(input);
+      assert.strictEqual(result.maxHeapSize, null);
+    });
+  });
+
   describe('G1 Format', () => {
     it('should parse KB values', () => {
       const log = `[2025-10-24T12:00:00.000+0800][info][gc] GC pause (G1 Young Generation) (System.gc()) 16384K->8192K(65536K) 15.123ms`;

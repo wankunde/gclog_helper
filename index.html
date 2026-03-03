@@ -83,15 +83,22 @@
     #fileList {
       width: 100%;
       margin: 10px 0;
+      border-collapse: collapse;
     }
-    .file-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 5px 0;
-      padding: 5px;
+    #fileList thead {
+      display: none;
+    }
+    #fileList.has-files thead {
+      display: table-header-group;
+    }
+    #fileList th, #fileList td {
       border: 1px solid #666;
-      border-radius: 4px;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    #fileList th {
+      background-color: var(--bg-color);
+      font-weight: bold;
     }
     .color-picker {
       width: 30px;
@@ -192,7 +199,18 @@
     <span id="status"></span>
     <div id="error"></div>
   </div>
-  <div id="fileList"></div>
+  <table id="fileList">
+    <thead>
+      <tr>
+        <th>Color</th>
+        <th>File Name</th>
+        <th>GC Type</th>
+        <th>Max Heap</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
   <div id="chartContainer">
     <div class="chart-controls"></div>
     <canvas id="chart"></canvas>

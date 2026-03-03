@@ -276,11 +276,15 @@ class GCLogViewer {
   }
 
   updateFileList() {
-    this.fileList.innerHTML = '';
-    for (const [key, { color, customLabel, displayName }] of this.files) {
-      const item = document.createElement('div');
-      item.className = 'file-item';
+    const tbody = this.fileList.querySelector('tbody');
+    tbody.innerHTML = '';
+    this.fileList.classList.toggle('has-files', this.files.size > 0);
 
+    for (const [key, { color, data, customLabel, displayName }] of this.files) {
+      const row = document.createElement('tr');
+
+      // Color picker cell
+      const colorCell = document.createElement('td');
       const colorPicker = document.createElement('input');
       colorPicker.type = 'color';
       colorPicker.className = 'color-picker';
@@ -289,7 +293,10 @@ class GCLogViewer {
         this.files.get(key).color = e.target.value;
         this.updateChart();
       });
+      colorCell.appendChild(colorPicker);
 
+      // File name cell (editable)
+      const nameCell = document.createElement('td');
       const label = document.createElement('span');
       label.contentEditable = true;
       label.textContent = customLabel || displayName;
@@ -311,15 +318,29 @@ class GCLogViewer {
           e.target.blur();
         }
       });
+      nameCell.appendChild(label);
 
+      // GC Type cell
+      const gcTypeCell = document.createElement('td');
+      gcTypeCell.textContent = data.gcName || data.collectorType || '-';
+
+      // Max Heap cell
+      const maxHeapCell = document.createElement('td');
+      maxHeapCell.textContent = data.maxHeapSize || '-';
+
+      // Delete button cell
+      const actionCell = document.createElement('td');
       const removeBtn = document.createElement('button');
       removeBtn.textContent = '\u00d7';
       removeBtn.addEventListener('click', () => this.removeFile(key));
+      actionCell.appendChild(removeBtn);
 
-      item.appendChild(colorPicker);
-      item.appendChild(label);
-      item.appendChild(removeBtn);
-      this.fileList.appendChild(item);
+      row.appendChild(colorCell);
+      row.appendChild(nameCell);
+      row.appendChild(gcTypeCell);
+      row.appendChild(maxHeapCell);
+      row.appendChild(actionCell);
+      tbody.appendChild(row);
     }
   }
 
