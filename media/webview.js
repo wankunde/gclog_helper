@@ -25,6 +25,8 @@ class GCLogViewer {
   init(theme) {
     this.fileInput = document.getElementById('fileInput');
     this.browseBtn = document.getElementById('browseBtn');
+    this.urlInput = document.getElementById('urlInput');
+    this.fetchBtn = document.getElementById('fetchBtn');
     this.status = document.getElementById('status');
     this.errorDiv = document.getElementById('error');
     this.fileList = document.getElementById('fileList');
@@ -44,6 +46,14 @@ class GCLogViewer {
     this.updateChart();
 
     this.setupEventListeners();
+
+    // Support ?url=xxx query parameter for sharing
+    const params = new URLSearchParams(window.location.search);
+    const urlParam = params.get('url');
+    if (urlParam) {
+      this.urlInput.value = urlParam;
+      this.handleUrl(urlParam);
+    }
   }
 
   toggleDetailTable() {
@@ -103,6 +113,41 @@ class GCLogViewer {
     }
   }
 
+  async handleUrl(url) {
+    try {
+      this.errorDiv.textContent = '';
+      this.status.textContent = `Fetching ${url}...`;
+
+      let content;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        content = await res.text();
+      } catch (directErr) {
+        this.status.textContent = `Retrying via CORS proxy...`;
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        const res = await fetch(proxyUrl);
+        if (!res.ok) throw new Error(`Proxy fetch failed: HTTP ${res.status}`);
+        content = await res.text();
+      }
+
+      const result = parse(content);
+      if (!result || (!result.values?.length && !result.events?.length)) {
+        this.errorDiv.textContent = `No valid GC data found from URL`;
+        this.status.textContent = 'Error';
+        return;
+      }
+
+      const displayName = url.split('/').pop().split('?')[0] || 'remote-log';
+      const key = `${displayName}_${Date.now()}`;
+      this.addFileData(key, displayName, result);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      this.errorDiv.textContent = `Failed to fetch URL: ${err.message}`;
+      this.status.textContent = 'Error';
+    }
+  }
+
   async handleFiles(fileList) {
     for (const file of fileList) {
       try {
@@ -133,6 +178,23 @@ class GCLogViewer {
     // Browse button triggers hidden file input
     this.browseBtn.addEventListener('click', () => {
       this.fileInput.click();
+    });
+
+    // Fetch URL button
+    this.fetchBtn.addEventListener('click', () => {
+      const url = this.urlInput.value.trim();
+      if (!url) {
+        this.errorDiv.textContent = 'Please enter a URL';
+        return;
+      }
+      this.handleUrl(url);
+    });
+
+    // Enter key submits URL
+    this.urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        this.fetchBtn.click();
+      }
     });
 
     // File input change handler
