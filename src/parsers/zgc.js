@@ -1,5 +1,5 @@
-const BaseParser = require('./base');
-const { convertToKb, parseDuration } = require('../utils');
+import BaseParser from './base.js';
+import { convertToKb, parseDuration } from '../utils.js';
 
 class ZGCParser extends BaseParser {
   constructor() {
@@ -88,4 +88,4 @@ class ZGCParser extends BaseParser {
   }
 }
 
-module.exports = ZGCParser;
+export default ZGCParser;

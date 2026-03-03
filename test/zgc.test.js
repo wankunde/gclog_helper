@@ -1,5 +1,6 @@
-const assert = require('assert');
-const ZGCParser = require('../src/parsers/zgc');
+import assert from 'assert';
+import ZGCParser from '../src/parsers/zgc.js';
+import { describe, it, beforeEach } from 'node:test';
 
 describe('ZGC Parser', () => {
   let parser;
@@ -58,7 +59,7 @@ describe('ZGC Parser', () => {
         '[2025-10-24T10:39:42.353+0800][info][gc] GC(1) Major Collection (Test) 100M(1%)->50M(0%) 0.035s',
         '[2025-10-24T10:39:42.354+0800][info][gc] GC(2) Major Collection (Test) 2G(1%)->1G(0%) 0.035s'
       ];
-      
+
       const results = inputs.map(input => parser.parse(input));
       assert.strictEqual(results[0].events[0].afterSize, 512); // 512K
       assert.strictEqual(results[1].events[0].afterSize, 50 * 1024); // 50M
@@ -71,7 +72,7 @@ describe('ZGC Parser', () => {
       const input = '[2025-10-24T10:39:42.352+0800][info][gc] GC(0) Major Collection (System.gc()) 100M(40%)->50M(20%) 0.035s';
       const result = parser.parse(input);
       const event = result.events[0];
-      
+
       assert.strictEqual(event.phase, 'Major Collection');
       assert.strictEqual(event.reason, 'System.gc()');
       assert.strictEqual(event.beforeSize, 100 * 1024);

@@ -1,5 +1,5 @@
-const BaseParser = require('./base');
-const { convertToKb, parseDuration } = require('../utils');
+import BaseParser from './base.js';
+import { convertToKb, parseDuration } from '../utils.js';
 
 class G1Parser extends BaseParser {
   constructor() {
@@ -86,4 +86,4 @@ class G1Parser extends BaseParser {
   }
 }
 
-module.exports = G1Parser;
+export default G1Parser;

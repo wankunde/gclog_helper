@@ -66,4 +66,4 @@ class BaseParser {
   }
 }
 
-module.exports = BaseParser;
+export default BaseParser;

@@ -1,5 +1,6 @@
-const assert = require('assert');
-const G1Parser = require('../src/parsers/g1');
+import assert from 'assert';
+import G1Parser from '../src/parsers/g1.js';
+import { describe, it, beforeEach } from 'node:test';
 
 describe('G1 Parser', () => {
   let parser;
@@ -61,7 +62,7 @@ describe('G1 Parser', () => {
         '[2025-10-24T10:39:42.000+0800][info][gc] GC pause (G1 Young Generation) 100M->50M(200M)',
         '[2025-10-24T10:39:43.000+0800][info][gc] GC pause (G1 Young Generation) 2G->1G(4G)'
       ];
-      
+
       const results = inputs.map(input => parser.parse(input));
       assert.strictEqual(results[0].events[0].afterSize, 512);
       assert.strictEqual(results[1].events[0].afterSize, 50 * 1024);
@@ -86,7 +87,7 @@ describe('G1 Parser', () => {
     it('should parse multiple events', () => {
       const input = `[2025-10-24T10:39:41.000+0800][info][gc] GC pause (G1 Young Generation) 4096M->2048M(8192M) 15.339ms
 [2025-10-24T10:39:42.000+0800][info][gc] GC pause (G1 Mixed Generation) 2048M->1024M(8192M) 20.123ms`;
-      
+
       const result = parser.parse(input);
       assert.strictEqual(result.events.length, 2, 'Wrong number of events');
 
@@ -96,7 +97,7 @@ describe('G1 Parser', () => {
       assert.strictEqual(result.events[0].afterSize, 2048 * 1024);
       assert.strictEqual(result.events[0].duration, 15.339);
 
-      // Test second event  
+      // Test second event
       assert.strictEqual(result.events[1].phase, 'Mixed GC');
       assert.strictEqual(result.events[1].beforeSize, 2048 * 1024);
       assert.strictEqual(result.events[1].afterSize, 1024 * 1024);

@@ -1,5 +1,6 @@
-const assert = require('assert');
-const { convertToKb, formatMemorySize } = require('../src/utils');
+import assert from 'assert';
+import { convertToKb, formatMemorySize } from '../src/utils.js';
+import { describe, it } from 'node:test';
 
 describe('Utils', () => {
   describe('Memory Conversion', () => {

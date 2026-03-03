@@ -1,7 +1,6 @@
 // Main parser that delegates to specific GC parsers
-const ZGCParser = require('./parsers/zgc');
-const G1Parser = require('./parsers/g1');
-const { convertToKb } = require('./utils');
+import ZGCParser from './parsers/zgc.js';
+import G1Parser from './parsers/g1.js';
 
 /**
  * Detects the garbage collector (GC) type from the log lines.
@@ -78,4 +77,4 @@ function parse(content) {
   return result;
 }
 
-module.exports = { parse, detectGCType };
+export { parse, detectGCType };

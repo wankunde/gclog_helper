@@ -1,8 +1,8 @@
-const BaseParser = require('../src/parsers/base');
+import BaseParser from '../src/parsers/base.js';
 
 class TestParser extends BaseParser {
   parseMemoryInfo() { return null; }
   parseGCEvent() { return null; }
 }
 
-module.exports = { TestParser };
+export { TestParser };

@@ -1,47 +1,44 @@
-const vscode = acquireVsCodeApi();
+import { Chart, registerables } from 'chart.js';
+import zoomPlugin from 'chartjs-plugin-zoom';
+import { parse } from '../src/parser.js';
+import { formatMemorySize, getColor } from './utils.js';
+
+Chart.register(...registerables, zoomPlugin);
 
 class GCLogViewer {
   constructor() {
-    // Restore state or initialize new state
-    const state = vscode.getState() || {
-      files: {},
-      theme: 'light'
-    };
-    
-    this.files = new Map(Object.entries(state.files));
+    const saved = localStorage.getItem('gclog-state');
+    const state = saved ? JSON.parse(saved) : { theme: 'light' };
+
+    // Don't restore file data from localStorage (too large), only theme
+    this.files = new Map();
     this.chart = null;
     this.init(state.theme);
   }
 
   saveState() {
-    // Convert Map to plain object for state storage
-    const files = {};
-    this.files.forEach((value, key) => {
-      files[key] = value;
-    });
-
-    vscode.setState({
-      files,
+    localStorage.setItem('gclog-state', JSON.stringify({
       theme: this.themeSelect.value
-    });
+    }));
   }
 
   init(theme) {
-    this.input = document.getElementById('pathInput');
+    this.fileInput = document.getElementById('fileInput');
     this.browseBtn = document.getElementById('browseBtn');
-    this.openBtn = document.getElementById('openBtn');
     this.status = document.getElementById('status');
     this.errorDiv = document.getElementById('error');
     this.fileList = document.getElementById('fileList');
     this.themeSelect = document.getElementById('themeSelect');
     this.exportBtn = document.getElementById('exportBtn');
     this.resetZoomBtn = document.getElementById('resetZoomBtn');
+    this.chartContainer = document.getElementById('chartContainer');
+    this.dropHint = document.getElementById('dropHint');
     this.ctx = document.getElementById('chart').getContext('2d');
 
-    // Initialize theme and time format from saved state
+    // Initialize theme from saved state
     this.themeSelect.value = theme || 'light';
     document.body.classList.toggle('dark-theme', this.themeSelect.value === 'dark');
-    
+
     // Update UI from saved state
     this.updateFileList();
     this.updateChart();
@@ -53,7 +50,7 @@ class GCLogViewer {
     const detailTable = document.getElementById('detailTable');
     const detailBtn = document.getElementById('detailBtn');
     const isVisible = detailTable.classList.contains('show');
-    
+
     detailTable.classList.toggle('show');
     detailBtn.textContent = isVisible ? 'Show Details' : 'Hide Details';
 
@@ -67,41 +64,32 @@ class GCLogViewer {
     tbody.innerHTML = '';
 
     for (const [path, { data }] of this.files) {
-      const filename = path.split('/').pop();
-      
-      data.events.forEach((event, index) => {
+      data.events.forEach((event) => {
         const row = document.createElement('tr');
-        
-        // Time cell
+
         const timeCell = document.createElement('td');
         timeCell.textContent = event.timestamp;
 
-        // AppTime cell
         const appTimeCell = document.createElement('td');
         appTimeCell.textContent = event.appTime;
 
-        // Phase cell
         const phaseCell = document.createElement('td');
         phaseCell.textContent = event.phase;
-        
-        // Duration cell
+
         const durationCell = document.createElement('td');
         durationCell.textContent = event.duration?.toFixed(2) || '-';
-        
-        // Before Size cell
+
         const beforeSizeCell = document.createElement('td');
-        beforeSizeCell.textContent = event.beforeSize ? 
+        beforeSizeCell.textContent = event.beforeSize ?
           (event.beforeSize / 1024).toFixed(2) : '-';
-        
-        // After Size cell
+
         const afterSizeCell = document.createElement('td');
-        afterSizeCell.textContent = event.afterSize ? 
+        afterSizeCell.textContent = event.afterSize ?
           (event.afterSize / 1024).toFixed(2) : '-';
-        
-        // Details cell
+
         const detailsCell = document.createElement('td');
         detailsCell.textContent = event.reason || '-';
-        
+
         row.appendChild(timeCell);
         row.appendChild(appTimeCell);
         row.appendChild(phaseCell);
@@ -109,26 +97,50 @@ class GCLogViewer {
         row.appendChild(beforeSizeCell);
         row.appendChild(afterSizeCell);
         row.appendChild(detailsCell);
-        
+
         tbody.appendChild(row);
       });
     }
   }
 
+  async handleFiles(fileList) {
+    for (const file of fileList) {
+      try {
+        this.errorDiv.textContent = '';
+        this.status.textContent = `Parsing ${file.name}...`;
+
+        const content = await file.text();
+        const result = parse(content);
+
+        if (!result || (!result.values?.length && !result.events?.length)) {
+          this.errorDiv.textContent = `No valid GC data found in ${file.name}`;
+          this.status.textContent = 'Error';
+          continue;
+        }
+
+        // Use filename + timestamp as key to avoid collisions
+        const key = `${file.name}_${Date.now()}`;
+        this.addFileData(key, file.name, result);
+      } catch (err) {
+        console.error('Parse error:', err);
+        this.errorDiv.textContent = `Error parsing ${file.name}: ${err.message}`;
+        this.status.textContent = 'Error';
+      }
+    }
+  }
+
   setupEventListeners() {
+    // Browse button triggers hidden file input
     this.browseBtn.addEventListener('click', () => {
-      vscode.postMessage({ command: 'browse' });
+      this.fileInput.click();
     });
 
-    this.openBtn.addEventListener('click', () => {
-      const path = this.input.value.trim();
-      if (!path) {
-        this.errorDiv.textContent = 'Please enter a file path or use Browse...';
-        return;
+    // File input change handler
+    this.fileInput.addEventListener('change', () => {
+      if (this.fileInput.files.length > 0) {
+        this.handleFiles(this.fileInput.files);
+        this.fileInput.value = ''; // Reset so same file can be selected again
       }
-      this.errorDiv.textContent = '';
-      this.status.textContent = 'Parsing...';
-      vscode.postMessage({ command: 'parse', path });
     });
 
     this.themeSelect.addEventListener('change', () => {
@@ -157,71 +169,68 @@ class GCLogViewer {
       this.toggleDetailTable();
     });
 
-    // Listen for messages from extension
-    window.addEventListener('message', event => {
-      const msg = event.data;
-      console.log('Received message:', msg);
-      if (msg.type === 'filepath') {
-        this.input.value = msg.path;
-        this.openBtn.click();
-      } else if (msg.type === 'result') {
-        this.status.textContent = 'Log has been parsed';
-        if (!msg.data || (!msg.data.values?.length && !msg.data.events?.length)) {
-          this.errorDiv.textContent = 'No valid GC data found in the file';
-          this.status.textContent = 'Error';
-          return;
-        }
-        
-        this.addFileData(this.input.value, msg.data);
-      } else if (msg.type === 'error') {
-        console.error('Parse error:', msg.error);
-        this.errorDiv.textContent = msg.error;
-        this.status.textContent = 'Error';
+    // Drag and drop support
+    this.chartContainer.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      this.chartContainer.classList.add('drag-over');
+    });
+
+    this.chartContainer.addEventListener('dragleave', () => {
+      this.chartContainer.classList.remove('drag-over');
+    });
+
+    this.chartContainer.addEventListener('drop', (e) => {
+      e.preventDefault();
+      this.chartContainer.classList.remove('drag-over');
+      if (e.dataTransfer.files.length > 0) {
+        this.handleFiles(e.dataTransfer.files);
       }
     });
   }
 
-  addFileData(path, data) {
-    const fileIndex = this.files.size;  // Current number of files as index
-    const color = getColor(fileIndex);   // Use index to get sequential color
-    this.files.set(path, { color, data, hidden: false, customLabel: null });
-    this.status.textContent = 'Update file list';
+  addFileData(key, displayName, data) {
+    const fileIndex = this.files.size;
+    const color = getColor(fileIndex);
+    this.files.set(key, { color, data, hidden: false, customLabel: null, displayName });
+    this.updateDropHint();
     this.updateFileList();
-
-    this.status.textContent = 'Update chart';
     this.updateChart();
-    this.status.textContent = 'save state';
     this.saveState();
     this.status.textContent = 'Done';
   }
 
   removeFile(path) {
     this.files.delete(path);
+    this.updateDropHint();
     this.updateFileList();
     this.updateChart();
     this.saveState();
   }
 
+  updateDropHint() {
+    if (this.dropHint) {
+      this.dropHint.style.display = this.files.size === 0 ? 'block' : 'none';
+    }
+  }
+
   updateFileList() {
     this.fileList.innerHTML = '';
-    for (const [path, { color, customLabel }] of this.files) {
-      this.status.textContent = 'Prepare color picker for ' + path;
+    for (const [key, { color, customLabel, displayName }] of this.files) {
       const item = document.createElement('div');
       item.className = 'file-item';
-      
+
       const colorPicker = document.createElement('input');
       colorPicker.type = 'color';
       colorPicker.className = 'color-picker';
       colorPicker.value = color;
       colorPicker.addEventListener('change', (e) => {
-        this.files.get(path).color = e.target.value;
+        this.files.get(key).color = e.target.value;
         this.updateChart();
       });
-      
-      this.status.textContent = 'Prepare label for ' + path;
+
       const label = document.createElement('span');
       label.contentEditable = true;
-      label.textContent = customLabel || path.split('/').pop(); // Show custom label or filename
+      label.textContent = customLabel || displayName;
       label.style.cursor = 'pointer';
       label.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -229,7 +238,7 @@ class GCLogViewer {
       label.addEventListener('blur', (e) => {
         const newLabel = e.target.textContent.trim();
         if (newLabel) {
-          this.files.get(path).customLabel = newLabel;
+          this.files.get(key).customLabel = newLabel;
           this.updateChart();
           this.saveState();
         }
@@ -241,10 +250,9 @@ class GCLogViewer {
         }
       });
 
-      this.status.textContent = 'Prepare removeBtn for ' + path;
       const removeBtn = document.createElement('button');
-      removeBtn.textContent = '×';
-      removeBtn.addEventListener('click', () => this.removeFile(path));
+      removeBtn.textContent = '\u00d7';
+      removeBtn.addEventListener('click', () => this.removeFile(key));
 
       item.appendChild(colorPicker);
       item.appendChild(label);
@@ -269,21 +277,16 @@ class GCLogViewer {
 
   updateChart() {
     let datasets = [];
-    // Update detail table if it's visible
-    // this.status.textContent = 'Update detail table';
     const detailTable = document.getElementById('detailTable');
     if (detailTable.classList.contains('show')) {
       this.updateDetailTable();
     }
 
-    Array.from(this.files.entries()).forEach(([path, { color, data, hidden, customLabel }]) => {
+    Array.from(this.files.entries()).forEach(([key, { color, data, hidden, customLabel, displayName }]) => {
       if (hidden) return;
-      
-      let datasetLabel = path.split('/').pop();
-      this.status.textContent = 'Add dataset from ' + path;
-      // Create heap size data points for before and after each GC event
+
       const heapData = [];
-      for(let i = 0; i < data.events.length; i++){
+      for (let i = 0; i < data.events.length; i++) {
         let event = data.events[i];
         heapData.push({
           x: event.appTime,
@@ -296,9 +299,9 @@ class GCLogViewer {
           timestamp: event.timestamp
         });
       }
-      
+
       datasets.push({
-        label: customLabel || path.split('/').pop(),
+        label: customLabel || displayName,
         data: heapData,
         borderColor: color,
         backgroundColor: color + '20',
@@ -348,7 +351,7 @@ class GCLogViewer {
             grid: { color: gridColor },
             ticks: {
               color: textColor,
-              callback: function(value) {
+              callback: function (value) {
                 return formatMemorySize(value);
               }
             }
@@ -357,19 +360,19 @@ class GCLogViewer {
         plugins: {
           zoom: {
             zoom: {
-              wwheel: { enabled: false }, // Disable mouse wheel zoom
+              wheel: { enabled: false },
               pinch: { enabled: true },
               mode: 'x',
-              drag: { enabled: true } // Enable drag-to-zoom
+              drag: { enabled: true }
             },
             pan: { enabled: true }
           },
           tooltip: {
             callbacks: {
-              title: function(context) {
+              title: function (context) {
                 return context[0].parsed.timestamp;
               },
-              label: function(context) {
+              label: function (context) {
                 return context.dataset.label + ': ' + formatMemorySize(context.parsed.y);
               }
             }

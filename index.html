@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GC Log Helper</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 10px;
+      --bg-color: #ffffff;
+      --text-color: #000000;
+    }
+    body.dark-theme {
+      --bg-color: #1e1e1e;
+      --text-color: #ffffff;
+    }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+    #controls {
+      margin-bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .control-group {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    button {
+      padding: 6px 12px;
+      background: #0078d4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #106ebe;
+    }
+    #chartContainer {
+      width: 100%;
+      height: 400px;
+      position: relative;
+      background: var(--bg-color);
+      border: 1px solid #666;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+      transition: border-color 0.2s;
+    }
+    #chartContainer.drag-over {
+      border-color: #0078d4;
+      border-style: dashed;
+      border-width: 2px;
+    }
+    #error { color: #ff6b6b; }
+    #gcType {
+      display: none;
+      padding: 6px 12px;
+      background: #0078d4;
+      color: white;
+      border-radius: 4px;
+    }
+    select {
+      padding: 6px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      border: 1px solid #666;
+    }
+    .chart-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 5px;
+      z-index: 100;
+    }
+    #fileList {
+      width: 100%;
+      margin: 10px 0;
+    }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 5px 0;
+      padding: 5px;
+      border: 1px solid #666;
+      border-radius: 4px;
+    }
+    .color-picker {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: none;
+    }
+    #legendContainer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border: 1px solid #666;
+      border-radius: 4px;
+      cursor: pointer;
+      opacity: 1;
+      transition: opacity 0.2s;
+    }
+    .legend-item.disabled {
+      opacity: 0.5;
+    }
+    .legend-color {
+      width: 15px;
+      height: 15px;
+      border-radius: 3px;
+    }
+    #detailTable {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      display: none;
+    }
+    #detailTable th, #detailTable td {
+      border: 1px solid #666;
+      padding: 8px;
+      text-align: left;
+    }
+    #detailTable th {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-weight: bold;
+    }
+    #detailTable tr:nth-child(even) {
+      background-color: rgba(128, 128, 128, 0.1);
+    }
+    #detailTable.show {
+      display: table;
+    }
+    .drop-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #999;
+      font-size: 14px;
+      pointer-events: none;
+    }
+    #fileInput {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <input type="file" id="fileInput" accept=".log,.txt,.gc" multiple />
+  <div id="controls">
+    <div class="control-group">
+      <button id="browseBtn">Browse...</button>
+      <span id="gcType"></span>
+    </div>
+    <div class="control-group">
+      <button id="detailBtn">Show GC Details</button>
+      <button id="exportBtn">Export PNG</button>
+      <button id="resetZoomBtn">Reset Zoom</button>
+    </div>
+    <div class="control-group">
+      <select id="themeSelect">
+        <option value="light">Light Theme</option>
+        <option value="dark">Dark Theme</option>
+      </select>
+    </div>
+    <div id="legendContainer"></div>
+    <span id="status"></span>
+    <div id="error"></div>
+  </div>
+  <div id="fileList"></div>
+  <div id="chartContainer">
+    <div class="chart-controls"></div>
+    <canvas id="chart"></canvas>
+    <div class="drop-hint" id="dropHint">Drag & drop GC log files here, or click Browse</div>
+  </div>
+
+  <table id="detailTable">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>AppTime</th>
+        <th>Phase</th>
+        <th>Duration (ms)</th>
+        <th>Before Size (MB)</th>
+        <th>After Size (MB)</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script type="module" src="/media/webview.js"></script>
+</body>
+</html>

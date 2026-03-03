@@ -1,6 +1,7 @@
-const assert = require('assert');
-const G1Parser = require('../src/parsers/g1');
-const ZGCParser = require('../src/parsers/zgc');
+import assert from 'assert';
+import G1Parser from '../src/parsers/g1.js';
+import ZGCParser from '../src/parsers/zgc.js';
+import { describe, it, beforeEach } from 'node:test';
 
 describe('Parser Integration Tests', () => {
   describe('Mixed GC Logs', () => {

@@ -1,5 +1,6 @@
-const assert = require('assert');
-const { parse, detectGCType } = require('../src/parser');
+import assert from 'assert';
+import { parse, detectGCType } from '../src/parser.js';
+import { describe, it } from 'node:test';
 
 describe('Main Parser', () => {
   describe('detectGCType', () => {
@@ -121,7 +122,7 @@ describe('Main Parser', () => {
   it('should extract timestamps and maintain chronological order', () => {
     const input = `[2023-01-01T12:00:00.000+0800]: [GC pause (G1 Young Generation) 1024K->512K(2048K) 15.123ms]
 [2023-01-01T12:00:00.456+0800] GC pause (G1 Mixed Generation) 1024K->896K(2048K) 25.789ms`;
-    
+
     const result = parse(input);
     console.log(result.events);
     assert.ok(result.events.length === 2, 'Wrong number of events');
@@ -143,20 +144,20 @@ describe('Main Parser', () => {
     // First detect the parser type
     const type = detectGCType(testLog);
     assert.strictEqual(type, 'ZGC', 'Should detect ZGC collector from log content');
-    
+
     // Parse the content
     const result = parse(testLog);
-    
+
     // Should only include lines with GC events and memory data
     assert.strictEqual(result.events.length, 2, 'Wrong number of events');
-    
+
     // Verify first event
     assert.strictEqual(result.events[0].timestamp, '2025-10-24T10:40:27.096');
     assert.strictEqual(result.events[0].phase, 'Major Collection');
     assert.strictEqual(result.events[0].duration, 15.123);
     assert.strictEqual(result.events[0].beforeSize, 4096 * 1024);
     assert.strictEqual(result.events[0].afterSize, 2048 * 1024);
-    
+
     // Verify second event
     assert.strictEqual(result.events[1].timestamp, '2025-10-24T10:40:27.098');
     assert.strictEqual(result.events[1].phase, 'Minor Collection');

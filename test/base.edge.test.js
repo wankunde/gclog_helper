@@ -1,7 +1,6 @@
-const assert = require('assert');
-const BaseParser = require('../src/parsers/base');
-
-const { TestParser } = require('./test-utils');
+import assert from 'assert';
+import { TestParser } from './test-utils.js';
+import { describe, it, beforeEach } from 'node:test';
 
 describe('Base Parser - Edge Cases', () => {
   let parser;

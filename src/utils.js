@@ -43,8 +43,4 @@ function parseDuration(duration) {
   return unit === 's' ? numValue * 1000 : numValue;
 }
 
-module.exports = {
-  convertToKb,
-  formatMemorySize,
-  parseDuration
-};
+export { convertToKb, formatMemorySize, parseDuration };
