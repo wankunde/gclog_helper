@@ -56,6 +56,34 @@ describe('G1 Parser', () => {
       assert.strictEqual(event.afterSize, 1536 * 1024);
     });
 
+    it('should parse JDK 25 unified G1 pause formats', () => {
+      const input = `[2026-07-17T09:37:34.389+0800][info][gc] GC(0) Pause Young (Normal) (G1 Evacuation Pause) 85M->35M(1644M) 7.332ms
+[2026-07-17T09:37:35.905+0800][info][gc] GC(4) Pause Young (Mixed) (Metadata GC Threshold) 63M->42M(1640M) 9.751ms
+[2026-07-17T09:37:36.000+0800][info][gc] GC(5) Pause Full (G1 Compaction Pause) 100M->50M(1640M) 20.500ms`;
+
+      const result = parser.parse(input);
+
+      assert.strictEqual(result.events.length, 3);
+      assert.strictEqual(result.events[0].phase, 'Young GC');
+      assert.strictEqual(result.events[0].duration, 7.332);
+      assert.strictEqual(result.events[0].reason, 'G1 Evacuation Pause');
+      assert.strictEqual(result.events[1].phase, 'Mixed GC');
+      assert.strictEqual(result.events[1].reason, 'Metadata GC Threshold');
+      assert.strictEqual(result.events[2].phase, 'Full GC');
+      assert.strictEqual(result.events[2].reason, 'G1 Compaction Pause');
+    });
+
+    it('should parse legacy lowercase young and mixed G1 pauses', () => {
+      const input = `[2025-10-24T10:39:41.000+0800] GC pause (G1 Evacuation Pause) (young) 30773K->19437K(256M), 0.0425205 secs
+[2025-10-24T10:39:42.000+0800] GC pause (G1 Evacuation Pause) (mixed) 41547K->43667K(256M), 0.0381197 secs`;
+
+      const result = parser.parse(input);
+
+      assert.strictEqual(result.events.length, 2);
+      assert.strictEqual(result.events[0].phase, 'Young GC');
+      assert.strictEqual(result.events[1].phase, 'Mixed GC');
+    });
+
     it('should handle various memory units', () => {
       const inputs = [
         '[2025-10-24T10:39:41.000+0800][info][gc] GC pause (G1 Young Generation) 1024K->512K(2048K)',

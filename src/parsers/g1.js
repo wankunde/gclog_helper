@@ -11,25 +11,28 @@ class G1Parser extends BaseParser {
     let beforeSize = null, afterSize = null;
     let reason = '';
 
-    // Determine phase based on line content
-    if (line.includes('Young Generation') || line.match(/GC pause.*Young/)) {
-      phase = 'Young GC';
-    } else if (line.includes('Mixed Generation') || line.match(/GC pause.*Mixed/)) {
+    // Determine phase based on both legacy and JDK 9+ unified logging formats.
+    // Unified logging reports mixed collections as "Pause Young (Mixed)", so
+    // mixed must be checked before the general young-pause pattern.
+    if (line.includes('Mixed Generation') ||
+      /GC pause.*\(mixed\)/i.test(line) ||
+      /\bPause Young\s+\(Mixed\)/i.test(line)) {
       phase = 'Mixed GC';
-    } else if (line.includes('Full GC')) {
+    } else if (line.includes('Young Generation') ||
+      /GC pause.*\(young\)/i.test(line) ||
+      /\bPause Young\b/i.test(line)) {
+      phase = 'Young GC';
+    } else if (line.includes('Full GC') || /\bPause Full\b/i.test(line)) {
       phase = 'Full GC';
     } else {
       return null;
     }
 
-    console.log('Determined phase:', phase);
     // Extract duration if available
     const durationMatch = line.match(/(\d+\.\d+)\s*(m?s)/);
     if (durationMatch) {
       duration = parseDuration(durationMatch[0]);
     }
-    console.log('Extracted duration:', duration);
-
     // Extract memory changes
     const memoryMatch = line.match(/(\d+)([KMG])->(\d+)([KMG])/i);
     if (memoryMatch) {
@@ -39,14 +42,22 @@ class G1Parser extends BaseParser {
       return null; // Memory data is essential for G1 events
     }
 
-    console.log('Extracted memory sizes:', { beforeSize, afterSize });
     // Extract reason if available
-    const reasonMatch = line.match(/\(([^)]+)\)/);
-    if (reasonMatch) {
-      reason = reasonMatch[1].trim();
+    const phaseDetails = new Set([
+      'young',
+      'mixed',
+      'normal',
+      'concurrent start',
+      'prepare mixed'
+    ]);
+    const eventDescription = line.slice(0, memoryMatch.index);
+    const reasonMatches = [...eventDescription.matchAll(/\(([^)]+)\)/g)]
+      .map(match => match[1].trim())
+      .filter(value => !/^\d+$/.test(value) && !phaseDetails.has(value.toLowerCase()));
+    if (reasonMatches.length > 0) {
+      reason = reasonMatches.at(-1);
     }
 
-    console.log('Extracted reason:', reason);
     return {
       timestamp: timestamp?.absolute || '',
       appTime: new Date(timestamp.absolute) - startTime,
